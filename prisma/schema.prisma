@@ -1,0 +1,143 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model certification {
+  id      Int    @id @default(autoincrement())
+  name    String @db.VarChar(255)
+  user_id Int?
+  users   users? @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "certification_ibfk_1")
+
+  @@index([user_id], map: "user_id")
+}
+
+model gig_booking {
+  id         Int         @id @default(autoincrement())
+  gig_id     Int?
+  renter_id  Int
+  createdAt  DateTime?   @default(now()) @db.DateTime(0)
+  status_id  Int?
+  deleted    Boolean?
+  gig_status gig_status? @relation(fields: [status_id], references: [id], onDelete: SetDefault, onUpdate: NoAction, map: "gig_booking_ibfk_4")
+  users      users       @relation(fields: [renter_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "gig_booking_ibfk_5")
+  gigs       gigs?       @relation(fields: [gig_id], references: [id], onUpdate: NoAction, map: "gig_booking_ibfk_6")
+
+  @@index([gig_id], map: "gig_id")
+  @@index([renter_id], map: "renter_id")
+  @@index([status_id], map: "status_id")
+}
+
+model gig_cate_details {
+  id                    Int                     @id @default(autoincrement())
+  name                  String                  @db.VarChar(255)
+  description           String?                 @db.VarChar(255)
+  image                 String?                 @db.VarChar(255)
+  gig_cate_id           Int?
+  gig_cates             gig_cates?              @relation(fields: [gig_cate_id], references: [id], onUpdate: NoAction, map: "gig_cate_details_ibfk_1")
+  gigs_gig_cate_details gigs_gig_cate_details[]
+
+  @@index([gig_cate_id], map: "gig_cate_id")
+}
+
+model gig_cates {
+  id               Int                @id @default(autoincrement())
+  name_cate        String             @db.VarChar(100)
+  gig_cate_details gig_cate_details[]
+}
+
+model gig_status {
+  id          Int           @id @default(autoincrement())
+  name        String        @db.VarChar(255)
+  gig_booking gig_booking[]
+}
+
+model gigs {
+  id                    Int                     @id @default(autoincrement())
+  name                  String                  @db.VarChar(255)
+  image                 String?                 @db.VarChar(255)
+  description           String                  @db.VarChar(255)
+  author_id             Int
+  stars                 Int?                    @default(0)
+  detail                String                  @db.VarChar(255)
+  price                 Int                     @default(0)
+  deleted               Boolean?
+  gig_booking           gig_booking[]
+  users                 users                   @relation(fields: [author_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "gigs_ibfk_2")
+  gigs_gig_cate_details gigs_gig_cate_details[]
+  reviews               reviews[]
+
+  @@index([author_id], map: "author_id")
+}
+
+model reviews {
+  id            Int       @id @default(autoincrement())
+  gig_id        Int
+  user_id       Int
+  createdAt     DateTime? @default(now()) @db.DateTime(0)
+  content       String    @db.VarChar(255)
+  review_starts Int       @default(0)
+  gigs          gigs      @relation(fields: [gig_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "reviews_ibfk_3")
+  users         users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "reviews_ibfk_4")
+
+  @@index([gig_id], map: "gig_id")
+  @@index([user_id], map: "user_id")
+}
+
+model roles {
+  id        Int     @id @default(autoincrement())
+  name_role String  @db.VarChar(100)
+  users     users[]
+}
+
+model skill_user {
+  skill_id Int
+  user_id  Int
+  users    users  @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "skill_user_ibfk_2")
+  skills   skills @relation(fields: [skill_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "skill_user_ibfk_1")
+
+  @@id([skill_id, user_id])
+  @@index([user_id], map: "user_id")
+}
+
+model skills {
+  id         Int          @id @default(autoincrement())
+  name_skill String       @db.VarChar(255)
+  skill_user skill_user[]
+}
+
+model users {
+  id            Int             @id @default(autoincrement())
+  fullname      String          @db.VarChar(255)
+  email         String          @db.VarChar(255)
+  gender        String?         @db.VarChar(255)
+  pass_word     String          @db.VarChar(255)
+  phone         String          @db.VarChar(255)
+  birth_day     String?         @db.VarChar(255)
+  role_id       Int             @default(0)
+  avatar        String?         @db.VarChar(255)
+  refresh_token String?         @db.VarChar(255)
+  deleted       Boolean?        @default(false)
+  certification certification[]
+  gig_booking   gig_booking[]
+  gigs          gigs[]
+  reviews       reviews[]
+  skill_user    skill_user[]
+  roles         roles           @relation(fields: [role_id], references: [id], onDelete: SetDefault, onUpdate: NoAction, map: "users_ibfk_1")
+
+  @@index([role_id], map: "role_id")
+}
+
+model gigs_gig_cate_details {
+  gig_id             Int
+  gig_cate_detail_id Int
+  gigs               gigs             @relation(fields: [gig_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "gigs_gig_cate_details_ibfk_1")
+  gig_cate_details   gig_cate_details @relation(fields: [gig_cate_detail_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "gigs_gig_cate_details_ibfk_2")
+
+  @@id([gig_id, gig_cate_detail_id])
+  @@index([gig_cate_detail_id], map: "gig_cate_detail_id")
+}
