@@ -1,12 +1,13 @@
 import { HttpException, HttpStatus, Inject, Injectable, NotFoundException, forwardRef } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import { ImageCompressed } from 'src/pipes/compress-images/compress-images.pipe';
-import { removeExcludedKeys } from 'ultil/excludeField';
+import { removeExcludedKeys } from 'ultil/function/excludeField';
 import { UserInfoDto } from './dto/user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { TokenPayload } from 'src/auth/dto/token.dto';
-import generateRandomString from 'ultil/randomString';
+import generateRandomString from 'ultil/function/randomString';
 import { AuthService } from 'src/auth/auth.service';
+import getArrayDifferences from 'ultil/function/getArrayDifferences';
 
 @Injectable()
 export class UsersService {
@@ -95,11 +96,7 @@ export class UsersService {
       }
       return acc;
     }, []);
-    // Find new skills in otherSkills that are not in skills
-    const newSkill = skills.filter(skill => !nameSkills.includes(skill));
-
-    // Find missing skills in skills that are not in otherSkills
-    const missSkill = nameSkills.filter(skill => !skills.includes(skill));
+    const {removedItems : missSkill, newItems : newSkill} = getArrayDifferences(nameSkills, skills);
 
     await Promise.allSettled(missSkill.map(skill => this.removeSkillUser(skill, userId)));
     await Promise.allSettled(newSkill.map(skill => this.addSkillUser(skill, userId)));

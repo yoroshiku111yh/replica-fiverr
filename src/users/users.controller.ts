@@ -113,5 +113,12 @@ export class UsersController {
     const payload = req.user;
     return this.usersService.postCertifications(data, payload.id);
   }
+
+  @ApiQuery({ name: 'page', required: true, type: Number, description: 'Page number', example: 1 })
+  @ApiQuery({ name: 'limit', required: true, type: Number, description: 'Number of users per page', example: 10 })
+  @Get("/:id(\\d+)/gigs")
+  getGigsByUserId(@Param("id", ParseIntPipe)id : number, @Query("page", ParseIntPipe) page : number, @Query("limit", ParseIntPipe) limit : number){
+    return id;
+  }
 }
 

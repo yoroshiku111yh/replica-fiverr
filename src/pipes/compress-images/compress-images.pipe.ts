@@ -2,8 +2,8 @@ import { ArgumentMetadata, BadRequestException, Inject, Injectable, PipeTransfor
 import * as path from 'path';
 import * as fs from 'fs-extra';
 const sharp = require('sharp');
-import generateRandomString from 'ultil/randomString';
-import removeNonAlphanumeric from 'ultil/removeNonAlphanumeric';
+import generateRandomString from 'ultil/function/randomString';
+import removeNonAlphanumeric from 'ultil/function/removeNonAlphanumeric';
 
 
 export interface ImageCompressed {

@@ -1,7 +1,7 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import { SubGigCateDto } from './dto/sub-cate.dto';
-import { removeExcludedKeys } from 'ultil/excludeField';
+import { removeExcludedKeys } from 'ultil/function/excludeField';
 import { ImageCompressed } from 'src/pipes/compress-images/compress-images.pipe';
 
 @Injectable()

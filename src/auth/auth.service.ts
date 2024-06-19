@@ -4,7 +4,7 @@ import { JwtService } from '@nestjs/jwt';
 import { PrismaClient } from '@prisma/client';
 import { registerDto } from './dto/register.dto';
 import { TokenPayload } from './dto/token.dto';
-import generateRandomString from 'ultil/randomString';
+import generateRandomString from 'ultil/function/randomString';
 import * as bcrypt from 'bcrypt';
 import { ROLE_LEVEL } from 'ultil/types';
 import { LoginDto } from './dto/login.dto';
