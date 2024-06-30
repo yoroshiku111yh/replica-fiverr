@@ -11,6 +11,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { SkillsModule } from './skills/skills.module';
 import { GigCatesModule } from './gig-cates/gig-cates.module';
 import { GigsModule } from './gigs/gigs.module';
+import { GigBookingModule } from './gig-booking/gig-booking.module';
 
 const publicPath = join(__dirname, '..', '..', 'public');
 Logger.log(`Serving static files from: ${publicPath}`);
@@ -32,6 +33,7 @@ Logger.log(`Serving static files from: ${publicPath}`);
     SkillsModule,
     GigCatesModule,
     GigsModule,
+    GigBookingModule,
   ],
   controllers: [AppController],
   providers: [AppService, JwtStrategy],

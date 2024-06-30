@@ -123,10 +123,20 @@ export class GigCatesController {
       fileSize: 2 * 10e6 // 2mb in byte
     }
   }))
-  uploadImage(@UploadedFile(CompressImagePipe) imageCate: ImageCompressed[], @Param("id", ParseIntPipe) id : number) {
+  uploadImage(@UploadedFile(CompressImagePipe) imageCate: ImageCompressed[], @Param("id", ParseIntPipe) id: number) {
     if (imageCate)
       return this.gigCatesService.postSubCategoryImage(id, imageCate[0]);
     else
       throw new HttpException("please upload file image below 2mb", HttpStatus.NOT_ACCEPTABLE);
+  }
+
+  @ApiQuery({ name: 'page', required: true, type: Number, description: 'Page number', example: 1 })
+  @ApiQuery({ name: 'limit', required: true, type: Number, description: 'Number of users per page', example: 10 })
+  @Get("/sub-categories/:id(\\d+)/gigs")
+  getGigsByUserId(
+    @Param("id", ParseIntPipe) id: number,
+    @Query("page", ParseIntPipe) page: number,
+    @Query("limit", ParseIntPipe) limit: number) {
+    return this.gigCatesService.getGigsBySubCateId(id, { size: limit, index: page });
   }
 }

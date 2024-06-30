@@ -17,19 +17,24 @@ model certification {
 }
 
 model gig_booking {
-  id         Int         @id @default(autoincrement())
-  gig_id     Int?
-  renter_id  Int
-  createdAt  DateTime?   @default(now()) @db.DateTime(0)
-  status_id  Int?
-  deleted    Boolean?
-  gig_status gig_status? @relation(fields: [status_id], references: [id], onDelete: SetDefault, onUpdate: NoAction, map: "gig_booking_ibfk_4")
-  users      users       @relation(fields: [renter_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "gig_booking_ibfk_5")
-  gigs       gigs?       @relation(fields: [gig_id], references: [id], onUpdate: NoAction, map: "gig_booking_ibfk_6")
+  id                                     Int         @id @default(autoincrement())
+  gig_id                                 Int?
+  renter_id                              Int
+  createdAt                              DateTime?   @default(now()) @db.DateTime(0)
+  status_id                              Int?
+  deleted                                Boolean?    @default(false)
+  gig_author_id                          Int
+  endAt                                  DateTime?   @db.DateTime(0)
+  name_booking                           String      @db.VarChar(255)
+  gig_status                             gig_status? @relation(fields: [status_id], references: [id], onDelete: SetDefault, onUpdate: NoAction, map: "gig_booking_ibfk_4")
+  users                                  users       @relation(fields: [renter_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "gig_booking_ibfk_5")
+  gigs                                   gigs?       @relation(fields: [gig_id], references: [id], onUpdate: NoAction, map: "gig_booking_ibfk_6")
+  users_gig_booking_gig_author_idTousers users       @relation("gig_booking_gig_author_idTousers", fields: [gig_author_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "gig_booking_ibfk_7")
 
   @@index([gig_id], map: "gig_id")
   @@index([renter_id], map: "renter_id")
   @@index([status_id], map: "status_id")
+  @@index([gig_author_id], map: "gig_author_id")
 }
 
 model gig_cate_details {
@@ -65,7 +70,7 @@ model gigs {
   stars                 Int?                    @default(0)
   detail                String                  @db.VarChar(255)
   price                 Int                     @default(0)
-  deleted               Boolean?
+  deleted               Boolean?                @default(false)
   gig_booking           gig_booking[]
   users                 users                   @relation(fields: [author_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "gigs_ibfk_2")
   gigs_gig_cate_details gigs_gig_cate_details[]
@@ -111,23 +116,26 @@ model skills {
 }
 
 model users {
-  id            Int             @id @default(autoincrement())
-  fullname      String          @db.VarChar(255)
-  email         String          @db.VarChar(255)
-  gender        String?         @db.VarChar(255)
-  pass_word     String          @db.VarChar(255)
-  phone         String          @db.VarChar(255)
-  birth_day     String?         @db.VarChar(255)
-  role_id       Int             @default(0)
-  avatar        String?         @db.VarChar(255)
-  refresh_token String?         @db.VarChar(255)
-  deleted       Boolean?        @default(false)
-  certification certification[]
-  gig_booking   gig_booking[]
-  gigs          gigs[]
-  reviews       reviews[]
-  skill_user    skill_user[]
-  roles         roles           @relation(fields: [role_id], references: [id], onDelete: SetDefault, onUpdate: NoAction, map: "users_ibfk_1")
+  id                                                 Int                @id @default(autoincrement())
+  fullname                                           String             @db.VarChar(255)
+  email                                              String             @db.VarChar(255)
+  gender                                             String?            @db.VarChar(255)
+  pass_word                                          String             @db.VarChar(255)
+  phone                                              String             @db.VarChar(255)
+  birth_day                                          String?            @db.VarChar(255)
+  role_id                                            Int                @default(0)
+  avatar                                             String?            @db.VarChar(255)
+  refresh_token                                      String?            @db.VarChar(255)
+  deleted                                            Boolean?           @default(false)
+  certification                                      certification[]
+  gig_booking                                        gig_booking[]
+  gig_booking_gig_booking_gig_author_idTousers       gig_booking[]      @relation("gig_booking_gig_author_idTousers")
+  gig_booking_user_gig_booking_user_renter_idTousers gig_booking_user[] @relation("gig_booking_user_renter_idTousers")
+  gig_booking_user_gig_booking_user_author_idTousers gig_booking_user[] @relation("gig_booking_user_author_idTousers")
+  gigs                                               gigs[]
+  reviews                                            reviews[]
+  skill_user                                         skill_user[]
+  roles                                              roles              @relation(fields: [role_id], references: [id], onDelete: SetDefault, onUpdate: NoAction, map: "users_ibfk_1")
 
   @@index([role_id], map: "role_id")
 }
@@ -135,9 +143,19 @@ model users {
 model gigs_gig_cate_details {
   gig_id             Int
   gig_cate_detail_id Int
-  gigs               gigs             @relation(fields: [gig_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "gigs_gig_cate_details_ibfk_1")
   gig_cate_details   gig_cate_details @relation(fields: [gig_cate_detail_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "gigs_gig_cate_details_ibfk_2")
+  gigs               gigs             @relation(fields: [gig_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "gigs_gig_cate_details_ibfk_1")
 
   @@id([gig_id, gig_cate_detail_id])
   @@index([gig_cate_detail_id], map: "gig_cate_detail_id")
+}
+
+model gig_booking_user {
+  renter_id                               Int
+  author_id                               Int
+  users_gig_booking_user_renter_idTousers users @relation("gig_booking_user_renter_idTousers", fields: [renter_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "gig_booking_user_ibfk_1")
+  users_gig_booking_user_author_idTousers users @relation("gig_booking_user_author_idTousers", fields: [author_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "gig_booking_user_ibfk_2")
+
+  @@id([renter_id, author_id])
+  @@index([author_id], map: "author_id")
 }

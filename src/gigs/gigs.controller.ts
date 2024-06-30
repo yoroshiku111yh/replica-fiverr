@@ -1,6 +1,6 @@
-import { Body, Controller, Get, HttpException, HttpStatus, Param, ParseIntPipe, Post, Put, Query, Req, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, HttpException, HttpStatus, Param, ParseIntPipe, Post, Put, Query, Req, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { GigsService } from './gigs.service';
-import { ApiBearerAuth, ApiBody, ApiConsumes, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { JwtGuard } from 'src/guards/jwt/jwt.guard';
 import { UploadGigDto } from './dto/upload-gig.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -23,7 +23,7 @@ export class GigsController {
   @ApiBody({
     description: 'Upload Gig',
     required: true,
-    type : UploadGigDto,
+    type: UploadGigDto,
     schema: {
       type: 'object',
       properties: {
@@ -105,5 +105,60 @@ export class GigsController {
     })
   }
 
+  @Get("/:id(\\d+)")
+  getGigById(@Param("id", ParseIntPipe) id: number) {
+    return this.gigsService.getGigById(id);
+  }
 
+  @ApiQuery({ name: 'page', required: true, type: Number, description: 'Page number', example: 1 })
+  @ApiQuery({ name: 'limit', required: true, type: Number, description: 'Number of gigs per page', example: 10 })
+  @ApiQuery({ name: 'keyword', required: true, type: String, description: 'search', example: "gig" })
+  @Get("/search")
+  searchGigsByName(
+    @Query("limit", ParseIntPipe) limit: number,
+    @Query("page", ParseIntPipe) page: number,
+    @Query("keyword") keyword: string) {
+    return this.gigsService.searchGigsByName({ index: page, size: limit }, keyword);
+  }
+
+  @Delete("/:id(\\d+)")
+  @ApiOperation({ summary: "Need permission Owner to access" })
+  deleteGig(@Param("id", ParseIntPipe) id: number) {
+    return id;
+  }
+
+
+  @ApiBearerAuth("access-token")
+  @ApiOperation({ summary: "Need permission Owner to access" })
+  @UseGuards(JwtGuard, OwnerGuard)
+  @ResourceInfo({
+    table: "gigs",
+    field: "author_id"
+  })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        imageGig: { 
+          type: 'string',
+          format: 'binary',
+          description: 'sub category image file'
+        },
+      },
+    },
+  })
+  @Post("/:resourceId(\\d+)/upload-image")
+  @UseInterceptors(FileInterceptor("imageGig", {
+    storage: memoryStorage(),
+    limits: {
+      fileSize: 2 * 10e6 // 2mb in byte
+    }
+  }))
+  uploadImage(@UploadedFile(CompressImagePipe) imageGig: ImageCompressed[], @Param("resourceId", ParseIntPipe) resourceId: number) {
+    if(!imageGig || imageGig.length === 0){
+      throw new BadRequestException("Image is required");
+    }
+    return this.gigsService.updateImageToGig(imageGig[0], resourceId);
+  }
 }

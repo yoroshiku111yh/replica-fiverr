@@ -7,4 +7,6 @@ export interface TypeDataResourceInfo {
 
 export const NAME_RESOURCE_INFO_DECORATOR = 'resource-info';
 
+
+//// USE WITH resourceId TO CHECK OWNER
 export const ResourceInfo = (args: TypeDataResourceInfo) => SetMetadata(NAME_RESOURCE_INFO_DECORATOR, args);

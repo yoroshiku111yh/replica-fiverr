@@ -20,7 +20,7 @@ export class GigCatesService {
         return {
             statusCode: HttpStatus.OK,
             message: "Upload categories of gig success",
-            data : results
+            data: results
         }
     }
 
@@ -56,7 +56,7 @@ export class GigCatesService {
         return {
             statusCode: HttpStatus.OK,
             message: "Upload sub category success",
-            data : result
+            data: result
         }
     }
 
@@ -72,7 +72,7 @@ export class GigCatesService {
         return {
             statusCode: HttpStatus.OK,
             message: "Upload sub category image success",
-            data : image.path
+            data: image.path
         }
     }
 
@@ -142,5 +142,49 @@ export class GigCatesService {
             statusCode: HttpStatus.OK,
             message: "Delete sub cateory success"
         }
+    }
+
+    async getGigsBySubCateId(cateId: number, page: { index: number, size: number }) {
+        const total = await this.prisma.gigs.count({
+            where: {
+                gigs_gig_cate_details: {
+                    some: {
+                        gig_cate_detail_id: cateId
+                    }
+                }
+            }
+        });
+        const index = (page.index - 1) * page.size;
+        const result = await this.prisma.gigs.findMany({
+            where: {
+                gigs_gig_cate_details: {
+                    some: {
+                        gig_cate_detail_id: cateId
+                    }
+                }
+            },
+            skip: index,
+            take: page.size,
+            orderBy: {
+                id: 'desc'
+            },
+            include: {
+                gigs_gig_cate_details: {
+                    include: {
+                        gig_cate_details: true
+                    }
+                }
+            }
+        });
+        return {
+            statusCode: HttpStatus.OK,
+            message: "list gigs of sub category",
+            data: {
+                currentPage: page.index,
+                pageSize: page.size,
+                totalPage: Math.ceil(total / page.size),
+                data: result
+            }
+        };
     }
 }

@@ -48,7 +48,7 @@ export class UsersService {
     return {
       statusCode: HttpStatus.OK,
       message: "upload avatar success",
-      data : avatar.path
+      data: avatar.path
     }
   }
 
@@ -96,7 +96,7 @@ export class UsersService {
       }
       return acc;
     }, []);
-    const {removedItems : missSkill, newItems : newSkill} = getArrayDifferences(nameSkills, skills);
+    const { removedItems: missSkill, newItems: newSkill } = getArrayDifferences(nameSkills, skills);
 
     await Promise.allSettled(missSkill.map(skill => this.removeSkillUser(skill, userId)));
     await Promise.allSettled(newSkill.map(skill => this.addSkillUser(skill, userId)));
@@ -258,20 +258,56 @@ export class UsersService {
     }
   }
 
-  async getSkills(userId : number){
+  async getSkills(userId: number) {
     const listSkill = await this.prisma.skills.findMany({
-      where : {
-        skill_user : {
-          some : {
-            user_id : userId
+      where: {
+        skill_user: {
+          some: {
+            user_id: userId
           }
         }
       }
     });
     return {
-      statusCode : HttpStatus.OK,
-      message : "List skill of user",
-      data : listSkill
+      statusCode: HttpStatus.OK,
+      message: "List skill of user",
+      data: listSkill
+    }
+  }
+
+  async getGigsByUserId(userId: number, page: { size: number, index: number }) {
+    const total = await this.prisma.gigs.count({
+      where: {
+        author_id: userId
+      }
+    });
+    const index = (page.index - 1) * page.size;
+    const listGig = await this.prisma.gigs.findMany({
+      where: {
+        author_id: userId
+      },
+      take: page.size,
+      skip: index,
+      orderBy: {
+        id: 'desc'
+      },
+      include: {
+        gigs_gig_cate_details: {
+          include: {
+            gig_cate_details: true
+          }
+        }
+      }
+    });
+    return {
+      statusCode: HttpStatus.OK,
+      message: "list gigs of user",
+      data: {
+        currentPage: page.index,
+        pageSize: page.size,
+        totalPage: Math.ceil(total / page.size),
+        data: listGig
+      }
     }
   }
 }

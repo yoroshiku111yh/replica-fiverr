@@ -12,7 +12,7 @@ export class GigsService {
     async postGig(image: ImageCompressed, data: UploadGigDto, userId: number) {
         const arCates = removeDuplicatesInFlatMap<number>(JSON.parse(data.cates));
         const arExistCates = await this.checkCatesOfGigExist(arCates);
-        if(arExistCates.length === 0){
+        if (arExistCates.length === 0) {
             throw new HttpException("Category must have", HttpStatus.BAD_REQUEST);
         }
         const gig = await this.prisma.gigs.create({
@@ -71,58 +71,58 @@ export class GigsService {
         }
     }
 
-    async editGigCates(gigId:number, cates : number[]){
+    async editGigCates(gigId: number, cates: number[]) {
         const arCateExits = removeDuplicatesInFlatMap<number>(cates);
         const arEditCate = await this.checkCatesOfGigExist(arCateExits);
-        if(arEditCate.length === 0){
+        if (arEditCate.length === 0) {
             throw new HttpException("Category must have", HttpStatus.BAD_REQUEST);
         }
         const listCateOfGig = await this.prisma.gigs_gig_cate_details.findMany({
-            where : {
-                gig_id : gigId,
+            where: {
+                gig_id: gigId,
             }
         });
         const arCateCurrent = listCateOfGig.reduce((ar, value) => {
             ar.push(value.gig_cate_detail_id);
             return ar;
-        },[]);
-        const {removedItems : removeCate, newItems : newCate} = getArrayDifferences(arCateCurrent, arEditCate);
+        }, []);
+        const { removedItems: removeCate, newItems: newCate } = getArrayDifferences(arCateCurrent, arEditCate);
         await Promise.allSettled(removeCate.map(cate => this.removeCateOfGig(gigId, cate)));
         await Promise.allSettled(newCate.map(cate => this.prisma.gigs_gig_cate_details.create({
-            data : {
-                gig_id : gigId,
-                gig_cate_detail_id : cate
+            data: {
+                gig_id: gigId,
+                gig_cate_detail_id: cate
             }
         })));
         return {
-            statusCode : HttpStatus.OK,
-            message : "Edit gig cate success"
+            statusCode: HttpStatus.OK,
+            message: "Edit gig cate success"
         }
     }
 
-    async removeCateOfGig(gigId : number, cateId : number){
+    async removeCateOfGig(gigId: number, cateId: number) {
         await this.prisma.gigs_gig_cate_details.delete({
-            where : {
-                gig_id_gig_cate_detail_id :{
-                    gig_id : gigId,
-                    gig_cate_detail_id : cateId
+            where: {
+                gig_id_gig_cate_detail_id: {
+                    gig_id: gigId,
+                    gig_cate_detail_id: cateId
                 }
             }
         });
         return {
-            statusCode : HttpStatus.OK,
-            message : "Remove cate of gig success"
+            statusCode: HttpStatus.OK,
+            message: "Remove cate of gig success"
         }
     }
 
-    async checkCatesOfGigExist(cates : number[]){
-        const checkCates = await Promise.all(cates.map(value => this.prisma.gig_cate_details.findUnique({ where: { id: value }, select : {id : true} })));
+    async checkCatesOfGigExist(cates: number[]) {
+        const checkCates = await Promise.all(cates.map(value => this.prisma.gig_cate_details.findUnique({ where: { id: value }, select: { id: true } })));
         const arExistCates = checkCates.reduce((ar, value) => {
-            if(value){
+            if (value) {
                 ar.push(value.id);
             }
             return ar;
-        },[]);
+        }, []);
         return arExistCates;
     }
 
@@ -176,11 +176,11 @@ export class GigsService {
                     }
                 },
                 gigs_gig_cate_details: {
-                    include : {
-                        gig_cate_details : {
-                            select : {
-                                name : true,
-                                id : true
+                    include: {
+                        gig_cate_details: {
+                            select: {
+                                name: true,
+                                id: true
                             }
                         }
                     }
@@ -196,6 +196,124 @@ export class GigsService {
                 totalPage: Math.ceil(total / page.size),
                 data: gigs
             }
+        }
+    }
+
+    async getGigById(id: number) {
+        const gig = await this.prisma.gigs.findUnique({
+            where: {
+                deleted: false,
+                id: id
+            },
+            include: {
+                users: {
+                    select: {
+                        fullname: true,
+                        id: true,
+                        avatar: true,
+                    }
+                },
+                gigs_gig_cate_details: {
+                    include: {
+                        gig_cate_details: {
+                            select: {
+                                name: true,
+                                id: true
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        if (!gig) {
+            throw new NotFoundException();
+        }
+        else {
+            return {
+                statusCode: HttpStatus.OK,
+                message: "Gig detail",
+                data: gig
+            }
+        }
+    }
+
+    async searchGigsByName(page: { index: number, size: number }, keyword: string) {
+        const total = await this.prisma.gigs.count({
+            where: {
+                deleted: false,
+                name: {
+                    contains: keyword,
+                }
+            }
+        });
+        const index = (page.index - 1) * page.size;
+        const gigs = await this.prisma.gigs.findMany({
+            where: {
+                deleted: false,
+                name: {
+                    contains: keyword,
+                }
+            },
+            skip: index,
+            take: page.size,
+            orderBy: {
+                id: 'desc'
+            },
+            include: {
+                users: {
+                    select: {
+                        fullname: true,
+                        id: true,
+                        avatar: true,
+                    }
+                },
+                gigs_gig_cate_details: {
+                    include: {
+                        gig_cate_details: {
+                            select: {
+                                name: true,
+                                id: true
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        return {
+            statusCode: HttpStatus.OK,
+            message: "List gigs search :",
+            data: {
+                currentPage: page.index,
+                pageSize: page.size,
+                totalPage: Math.ceil(total / page.size),
+                data: gigs
+            }
+        }
+    }
+
+    async updateImageToGig(image: ImageCompressed, id: number) {
+        const gig = await this.prisma.gigs.findUnique({
+            where: {
+                deleted: false,
+                id: id
+            }
+        });
+        if (!gig) {
+            throw new HttpException("Gig not found", HttpStatus.NOT_FOUND);
+        }
+        await this.prisma.gigs.update({
+            where: {
+                deleted: false,
+                id: id
+            },
+            data: {
+                image: image.path
+            }
+        })
+        return {
+            statusCode: HttpStatus.OK,
+            message: "upload image success",
+            data: image
         }
     }
 }

@@ -33,7 +33,7 @@ export class UsersController {
   }
 
   @Get("/:id(\\d+)/skills")
-  getSkills(@Param("id", ParseIntPipe) id : number){
+  getSkills(@Param("id", ParseIntPipe) id: number) {
     return this.usersService.getSkills(id);
   }
 
@@ -117,8 +117,11 @@ export class UsersController {
   @ApiQuery({ name: 'page', required: true, type: Number, description: 'Page number', example: 1 })
   @ApiQuery({ name: 'limit', required: true, type: Number, description: 'Number of users per page', example: 10 })
   @Get("/:id(\\d+)/gigs")
-  getGigsByUserId(@Param("id", ParseIntPipe)id : number, @Query("page", ParseIntPipe) page : number, @Query("limit", ParseIntPipe) limit : number){
-    return id;
+  getGigsByUserId(
+    @Param("id", ParseIntPipe) id: number,
+    @Query("page", ParseIntPipe) page: number,
+    @Query("limit", ParseIntPipe) limit: number) {
+    return this.usersService.getGigsByUserId(id, {size : limit, index : page});
   }
 }
 
