@@ -10,6 +10,14 @@ IF OWNER GO TO ROUTE ITEM -> OWNER HAVE PERMISSION TO ACCESS
 IF USER HAVE ROLE ADMIN -> USER HAVE PERMISSION TO ACCESS
 */
 
+// @UseGuards(JwtGuard, CompositeGuardMixin())
+//   @CompositeGuardDecorator(OwnerGuard, RoleGuard)
+//   @Roles(ROLE_LEVEL.ADMIN)
+//   @ResourceInfo({
+//     table: "gig_booking",
+//     field: "renter_id"
+//   })
+
 @Injectable()
 class CompositeGuard implements CanActivate {
   constructor(
@@ -24,17 +32,17 @@ class CompositeGuard implements CanActivate {
     }
     const results = await Promise.allSettled(guards.map(Guard => {
       const guard = new Guard(this.reflector);
-      if(typeof guard.canActivate === "function"){
+      if (typeof guard.canActivate === "function") {
         return guard.canActivate(context);
       }
     }));
     let allGuardsFailed = true;
-    for(let result of results){
-      if(result.status === "rejected"){
+    for (let result of results) {
+      if (result.status === "rejected") {
         console.log("################## Error guard : ##################");
         console.log(result.reason);
       }
-      if(result.status === "fulfilled" && result.value){
+      if (result.status === "fulfilled" && result.value) {
         allGuardsFailed = false;
       }
     }

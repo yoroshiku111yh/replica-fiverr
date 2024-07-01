@@ -1,9 +1,9 @@
 import { STATUS_BOOKING } from './../../ultil/types';
 import { Injectable, NotFoundException, ExecutionContext, HttpException, HttpStatus, BadRequestException, UnauthorizedException } from '@nestjs/common';
-import { PostBooking } from './dto/post-booking';
+import { PostBooking } from './dto/post-booking.dto';
 import { PrismaClient } from '@prisma/client';
 import isValidDate from 'ultil/function/validDateString';
-import { UpdateBooking } from './dto/update-booking';
+import { UpdateBooking } from './dto/update-booking.dto';
 
 @Injectable()
 export class GigBookingService {
@@ -22,7 +22,7 @@ export class GigBookingService {
                     select: {
                         id: true,
                     }
-                }
+                },
             }
         });
         if (!gig) {
@@ -94,7 +94,7 @@ export class GigBookingService {
                         avatar: true
                     }
                 },
-                users: {
+                users_gig_booking_renter_idTousers: {
                     select: {
                         id: true,
                         fullname: true,
@@ -142,7 +142,7 @@ export class GigBookingService {
                         avatar: true
                     }
                 },
-                users: {
+                users_gig_booking_renter_idTousers: {
                     select: {
                         id: true,
                         fullname: true,
@@ -190,7 +190,7 @@ export class GigBookingService {
                         avatar: true
                     }
                 },
-                users: {
+                users_gig_booking_renter_idTousers: {
                     select: {
                         id: true,
                         fullname: true,
@@ -310,13 +310,19 @@ export class GigBookingService {
         if (!booking) {
             throw new NotFoundException("booking not found");
         }
+        const status = await this.prisma.gig_status.findUnique({
+            where :{
+                id : 1
+            }
+        })
         await this.prisma.gig_booking.update({
             where: {
                 deleted: false,
                 id: bookingId
             },
             data: {
-                deleted: true
+                deleted: true,
+                status_id : status.id
             }
         });
         return {

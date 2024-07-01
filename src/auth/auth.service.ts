@@ -36,6 +36,9 @@ export class AuthService {
                 name_role: ROLE_LEVEL.USER
             }
         })
+        if(!roleUser){
+            throw new NotFoundException("role not found");
+        }
         const newUser = await this.prisma.users.create({
             data: {
                 fullname: fullname,
@@ -52,7 +55,8 @@ export class AuthService {
         const payload: TokenPayload = {
             id: newUser.id,
             name: newUser.fullname,
-            keyPair: generateRandomString(+process.env.LENGTH_KEY_PAIR)
+            keyPair: generateRandomString(+process.env.LENGTH_KEY_PAIR),
+            role : ROLE_LEVEL.USER
         }
         const { accessToken, refreshToken } = await this.createPairAccessAndRefreshToken(payload);
         await this.updateRefreshTokenToData(refreshToken, newUser.id);
@@ -67,6 +71,9 @@ export class AuthService {
         const user = await this.prisma.users.findFirst({
             where: {
                 email: email
+            },
+            include : {
+                roles : true
             }
         });
         if (!user) {
@@ -80,7 +87,8 @@ export class AuthService {
         const payload: TokenPayload = {
             id: user.id,
             name: user.fullname,
-            keyPair: generateRandomString(+process.env.LENGTH_KEY_PAIR)
+            keyPair: generateRandomString(+process.env.LENGTH_KEY_PAIR),
+            role : user.roles.name_role
         }
         const { accessToken, refreshToken } = await this.createPairAccessAndRefreshToken(payload);
         await this.updateRefreshTokenToData(refreshToken, user.id);

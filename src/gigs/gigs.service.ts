@@ -5,9 +5,13 @@ import { PrismaClient } from '@prisma/client';
 import { EditGigDto } from './dto/edit-gig-dto';
 import removeDuplicatesInFlatMap from 'ultil/function/getUniqueValueInFlatArray';
 import getArrayDifferences from 'ultil/function/getArrayDifferences';
+import { GigBookingService } from 'src/gig-booking/gig-booking.service';
 
 @Injectable()
 export class GigsService {
+    constructor(
+        private readonly gigBookingService : GigBookingService
+    ){}
     prisma = new PrismaClient();
     async postGig(image: ImageCompressed, data: UploadGigDto, userId: number) {
         const arCates = removeDuplicatesInFlatMap<number>(JSON.parse(data.cates));
@@ -314,6 +318,37 @@ export class GigsService {
             statusCode: HttpStatus.OK,
             message: "upload image success",
             data: image
+        }
+    }
+
+    async removeGig(gigId: number) {
+        const gig = await this.prisma.gigs.findUnique({
+            where: {
+                id: gigId
+            }
+        });
+        if (!gig) {
+            throw new NotFoundException("gig not found");
+        }
+        await this.prisma.gigs.update({
+            where: {
+                id: gigId
+            },
+            data: {
+                deleted: true
+            }
+        });
+        const listBooking = await this.prisma.gig_booking.findMany({
+            where : {
+                gig_id : gigId
+            }
+        });
+        await Promise.allSettled(listBooking.map((booking) => {
+            return this.gigBookingService.deleteBooking(booking.id);
+        }));
+        return {
+            statusCode: HttpStatus.OK,
+            message: "remove gig success"
         }
     }
 }

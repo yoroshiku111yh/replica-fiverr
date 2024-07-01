@@ -12,6 +12,8 @@ import { SkillsModule } from './skills/skills.module';
 import { GigCatesModule } from './gig-cates/gig-cates.module';
 import { GigsModule } from './gigs/gigs.module';
 import { GigBookingModule } from './gig-booking/gig-booking.module';
+import { CommentModule } from './comment/comment.module';
+import { ThrottlerModule } from '@nestjs/throttler';
 
 const publicPath = join(__dirname, '..', '..', 'public');
 Logger.log(`Serving static files from: ${publicPath}`);
@@ -19,6 +21,10 @@ Logger.log(`Serving static files from: ${publicPath}`);
 @Module({
   imports: [
     AuthModule,
+    ThrottlerModule.forRoot([{
+      ttl: 60000,
+      limit: 10,
+    }]),
     JwtModule.register({}),
     ConfigModule.forRoot(
       {
@@ -34,6 +40,7 @@ Logger.log(`Serving static files from: ${publicPath}`);
     GigCatesModule,
     GigsModule,
     GigBookingModule,
+    CommentModule,
   ],
   controllers: [AppController],
   providers: [AppService, JwtStrategy],

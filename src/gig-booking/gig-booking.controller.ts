@@ -2,12 +2,17 @@ import { Body, Controller, Delete, Get, Param, ParseIntPipe, Post, Put, Query, R
 import { GigBookingService } from './gig-booking.service';
 import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { JwtGuard } from 'src/guards/jwt/jwt.guard';
-import { RequestWithUser } from 'ultil/types';
+import { ROLE_LEVEL, RequestWithUser } from 'ultil/types';
 import { TokenPayload } from 'src/auth/dto/token.dto';
-import { PostBooking } from './dto/post-booking';
-import { UpdateBooking } from './dto/update-booking';
+import { PostBooking } from './dto/post-booking.dto';
+import { UpdateBooking } from './dto/update-booking.dto';
 import { OwnerGuard } from 'src/guards/owner/owner.guard';
 import { ResourceInfo } from 'src/decorators/resource-info/resource-info.decorator';
+import { CompositeGuardDecorator } from 'src/decorators/composite-guard/composite-guard.decorator';
+import { RoleGuard } from 'src/guards/role/role.guard';
+import { CompositeGuardMixin } from 'src/guards/composite/composite.guard';
+import { Roles } from 'src/decorators/role/roles.decorator';
+import { ThrottlerGuard } from '@nestjs/throttler';
 
 @Controller('gig-booking')
 @ApiTags("Booking")
@@ -39,7 +44,7 @@ export class GigBookingController {
   }
 
   @ApiBearerAuth("access-token")
-  @UseGuards(JwtGuard)
+  @UseGuards(JwtGuard, ThrottlerGuard)
   @Post("")
   createBooking(@Body() data: PostBooking, @Request() request: RequestWithUser<TokenPayload>) {
     return this.gigBookingService.createBooking(data, request.user.id);
@@ -58,8 +63,10 @@ export class GigBookingController {
   }
 
   @ApiBearerAuth("access-token")
-  @ApiOperation({ summary: "Need permission Owner to access" })
-  @UseGuards(JwtGuard, OwnerGuard)
+  @ApiOperation({ summary: "Need permission Owner or admin to access" })
+  @UseGuards(JwtGuard, CompositeGuardMixin())
+  @CompositeGuardDecorator(OwnerGuard, RoleGuard)
+  @Roles(ROLE_LEVEL.ADMIN)
   @ResourceInfo({
     table: "gig_booking",
     field: "renter_id"

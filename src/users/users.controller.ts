@@ -6,14 +6,11 @@ import { ApiBearerAuth, ApiBody, ApiConsumes, ApiQuery, ApiTags } from '@nestjs/
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { CompressImagePipe, ImageCompressed } from 'src/pipes/compress-images/compress-images.pipe';
-import { ROLE_LEVEL, RequestWithUser } from 'ultil/types';
-import { CompositeGuardMixin } from 'src/guards/composite/composite.guard';
-import { CompositeGuardDecorator } from 'src/decorators/composite-guard/composite-guard.decorator';
-import { RoleGuard } from 'src/guards/role/role.guard';
+import { RequestWithUser } from 'ultil/types';
 import { OwnerGuard } from 'src/guards/owner/owner.guard';
 import { ResourceInfo } from 'src/decorators/resource-info/resource-info.decorator';
-import { Roles } from 'src/decorators/role/roles.decorator';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { ThrottlerGuard } from '@nestjs/throttler';
 
 @ApiTags("Users")
 @Controller('users')
@@ -38,7 +35,7 @@ export class UsersController {
   }
 
   @ApiBearerAuth("access-token")
-  @UseGuards(JwtGuard, OwnerGuard)
+  @UseGuards(JwtGuard, OwnerGuard, ThrottlerGuard)
   @ResourceInfo({
     table: "users",
     field: "id"
@@ -49,7 +46,7 @@ export class UsersController {
   }
 
   @ApiBearerAuth("access-token")
-  @UseGuards(JwtGuard)
+  @UseGuards(JwtGuard, ThrottlerGuard)
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {
@@ -107,7 +104,7 @@ export class UsersController {
   }
 
   @ApiBearerAuth("access-token")
-  @UseGuards(JwtGuard)
+  @UseGuards(JwtGuard, ThrottlerGuard)
   @Post("/certifications")
   postCertifications(@Body() data: string[], @Req() req: RequestWithUser<TokenPayload>) {
     const payload = req.user;

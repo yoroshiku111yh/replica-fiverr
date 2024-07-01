@@ -54,7 +54,17 @@ export class UsersService {
 
   async editProfile(data: UpdateUserDto, userId: number) {
     const { gender, birthday, fullname, phone, skill } = data;
-
+    const user = await this.prisma.users.findUnique({
+      where : {
+        id : userId,
+      },
+      include : {
+        roles : true
+      }
+    });
+    if (!user) {
+      throw new NotFoundException("user not found");
+    }
     await this.prisma.users.update({
       where: {
         id: userId
@@ -63,14 +73,15 @@ export class UsersService {
         gender: gender,
         fullname: fullname,
         birth_day: birthday,
-        phone: phone,
+        phone: phone
       }
     });
     await this.editSkillsUser(skill, userId);
     const payload: TokenPayload = {
       id: userId,
       name: fullname,
-      keyPair: generateRandomString(+process.env.LENGTH_KEY_PAIR)
+      keyPair: generateRandomString(+process.env.LENGTH_KEY_PAIR),
+      role : user.roles.name_role
     }
     const { accessToken, refreshToken } = await this.authService.createPairAccessAndRefreshToken(payload);
     await this.authService.updateRefreshTokenToData(refreshToken, userId);

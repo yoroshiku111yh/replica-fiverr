@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Delete, Get, HttpException, HttpStatus, Param, ParseIntPipe, Post, Put, Query, Req, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, HttpException, HttpStatus, Param, ParseIntPipe, Post, Put, Query, Req, Request, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { GigsService } from './gigs.service';
 import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { JwtGuard } from 'src/guards/jwt/jwt.guard';
@@ -6,11 +6,17 @@ import { UploadGigDto } from './dto/upload-gig.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { CompressImagePipe, ImageCompressed } from 'src/pipes/compress-images/compress-images.pipe';
-import { RequestWithUser } from 'ultil/types';
+import { ROLE_LEVEL, RequestWithUser } from 'ultil/types';
 import { TokenPayload } from 'src/auth/dto/token.dto';
 import { OwnerGuard } from 'src/guards/owner/owner.guard';
 import { ResourceInfo } from 'src/decorators/resource-info/resource-info.decorator';
 import { EditGigDto } from './dto/edit-gig-dto';
+import { CompositeGuardMixin } from 'src/guards/composite/composite.guard';
+import { RoleGuard } from 'src/guards/role/role.guard';
+import { CompositeGuardDecorator } from 'src/decorators/composite-guard/composite-guard.decorator';
+import { Roles } from 'src/decorators/role/roles.decorator';
+import { ThrottlerGuard } from '@nestjs/throttler';
+import { RatingDto } from 'src/gigs/dto/rating.dto';
 
 @ApiTags("Gigs")
 @Controller('gigs')
@@ -18,7 +24,7 @@ export class GigsController {
   constructor(private readonly gigsService: GigsService) { }
 
   @ApiBearerAuth("access-token")
-  @UseGuards(JwtGuard)
+  @UseGuards(JwtGuard, ThrottlerGuard)
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     description: 'Upload Gig',
@@ -48,7 +54,9 @@ export class GigsController {
   }
 
   @ApiBearerAuth("access-token")
-  @UseGuards(JwtGuard, OwnerGuard)
+  @ApiOperation({ summary: "Need admin to access" })
+  @UseGuards(JwtGuard, RoleGuard, ThrottlerGuard)
+  @Roles(ROLE_LEVEL.ADMIN)
   @ResourceInfo({
     table: "gigs",
     field: "author_id"
@@ -121,10 +129,18 @@ export class GigsController {
     return this.gigsService.searchGigsByName({ index: page, size: limit }, keyword);
   }
 
+  @ApiBearerAuth("access-token")
+  @ApiOperation({ summary: "Need permission Owner or admin to access" })
+  @UseGuards(JwtGuard, CompositeGuardMixin())
+  @CompositeGuardDecorator(OwnerGuard,)
+  @Roles(ROLE_LEVEL.ADMIN)
+  @ResourceInfo({
+    table: "gig_booking",
+    field: "renter_id"
+  })
   @Delete("/:id(\\d+)")
-  @ApiOperation({ summary: "Need permission Owner to access" })
   deleteGig(@Param("id", ParseIntPipe) id: number) {
-    return id;
+    return this.gigsService.removeGig(id);
   }
 
 
@@ -140,7 +156,7 @@ export class GigsController {
     schema: {
       type: 'object',
       properties: {
-        imageGig: { 
+        imageGig: {
           type: 'string',
           format: 'binary',
           description: 'sub category image file'
@@ -156,9 +172,19 @@ export class GigsController {
     }
   }))
   uploadImage(@UploadedFile(CompressImagePipe) imageGig: ImageCompressed[], @Param("resourceId", ParseIntPipe) resourceId: number) {
-    if(!imageGig || imageGig.length === 0){
+    if (!imageGig || imageGig.length === 0) {
       throw new BadRequestException("Image is required");
     }
     return this.gigsService.updateImageToGig(imageGig[0], resourceId);
+  }
+
+  @ApiBearerAuth("access-token")
+  @UseGuards(JwtGuard)
+  @Post("/:id(\\d+)/rating")
+  ratingGig(@Body() data: RatingDto, @Request() req: RequestWithUser<TokenPayload>) {
+    return {
+      stars: data.stars,
+      userId: req.user.id
+    }
   }
 }
