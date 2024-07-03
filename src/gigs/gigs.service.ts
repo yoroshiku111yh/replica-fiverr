@@ -10,8 +10,8 @@ import { GigBookingService } from 'src/gig-booking/gig-booking.service';
 @Injectable()
 export class GigsService {
     constructor(
-        private readonly gigBookingService : GigBookingService
-    ){}
+        private readonly gigBookingService: GigBookingService
+    ) { }
     prisma = new PrismaClient();
     async postGig(image: ImageCompressed, data: UploadGigDto, userId: number) {
         const arCates = removeDuplicatesInFlatMap<number>(JSON.parse(data.cates));
@@ -339,8 +339,8 @@ export class GigsService {
             }
         });
         const listBooking = await this.prisma.gig_booking.findMany({
-            where : {
-                gig_id : gigId
+            where: {
+                gig_id: gigId
             }
         });
         await Promise.allSettled(listBooking.map((booking) => {
@@ -349,6 +349,102 @@ export class GigsService {
         return {
             statusCode: HttpStatus.OK,
             message: "remove gig success"
+        }
+    }
+
+    async rateGig(userId: number, gigId: number, rating: number) {
+        let createNew = 0;
+        let prevRating = 0;
+        const gig = await this.prisma.gigs.findUnique({
+            where: {
+                id: gigId
+            }
+        });
+        if (!gig) {
+            throw new NotFoundException("gig not found");
+        }
+        const ratingByUser = await this.prisma.gig_rating_users.findUnique({
+            where: {
+                gig_id_user_id: {
+                    gig_id: gigId,
+                    user_id: userId
+                }
+            },
+        });
+        if (!ratingByUser) {
+            createNew = 1;
+        }
+        else {
+            prevRating = ratingByUser.rating;
+        }
+        await this.prisma.gig_rating_users.upsert({
+            where: {
+                gig_id_user_id: {
+                    gig_id: gigId,
+                    user_id: userId
+                }
+            },
+            update: {
+                rating: rating
+            },
+            create: {
+                gig_id: gigId,
+                user_id: userId,
+                rating: rating
+            }
+        });
+        await this.prisma.gigs.update({
+            where: {
+                id: gigId
+            },
+            data: {
+                rating_count: gig.rating_count + createNew,
+                rating_total: gig.rating_total - prevRating + rating
+            }
+        })
+        return {
+            statusCode: HttpStatus.OK,
+            message: "rating gig success"
+        }
+    }
+    async removeRatingGig(userId: number, gigId: number) {
+        const gig = await this.prisma.gigs.findUnique({
+            where: {
+                id: gigId
+            }
+        });
+        const gigRating = await this.prisma.gig_rating_users.findUnique({
+            where: {
+                gig_id_user_id: {
+                    gig_id: gigId,
+                    user_id: userId
+                }
+            }
+        });
+        if (!gig) {
+            throw new NotFoundException("gig not found");
+        }
+        const prevRating = gigRating.rating;
+        await this.prisma.gig_rating_users.delete({
+            where: {
+                gig_id_user_id: {
+                    gig_id: gigId,
+                    user_id: userId
+                }
+            }
+        });
+        await this.prisma.gigs.update({
+            where: {
+                id: gigId
+            },
+            data: {
+                rating_count: gig.rating_count - 1,
+                rating_total: gig.rating_total - prevRating
+            }
+        });
+        return {
+            statusCode: HttpStatus.OK,
+            message: "Remove rating success"
         }
     }
 }

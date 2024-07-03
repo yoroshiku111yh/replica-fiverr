@@ -181,10 +181,14 @@ export class GigsController {
   @ApiBearerAuth("access-token")
   @UseGuards(JwtGuard)
   @Post("/:id(\\d+)/rating")
-  ratingGig(@Body() data: RatingDto, @Request() req: RequestWithUser<TokenPayload>) {
-    return {
-      stars: data.stars,
-      userId: req.user.id
-    }
+  ratingGig(@Body() data: RatingDto, @Request() req: RequestWithUser<TokenPayload>, @Param("id", ParseIntPipe) id : number) {
+    return this.gigsService.rateGig(req.user.id, id, data.stars)
+  }
+
+  @ApiBearerAuth("access-token")
+  @UseGuards(JwtGuard)
+  @Delete("/:id(\\d+)/rating")
+  removeRatingGig(@Request() req: RequestWithUser<TokenPayload>, @Param("id", ParseIntPipe) id : number){
+    return this.gigsService.removeRatingGig(req.user.id, id);
   }
 }
