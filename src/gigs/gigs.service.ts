@@ -48,7 +48,10 @@ export class GigsService {
     async editGig(data: EditGigDto, gigId: number) {
         const gig = await this.prisma.gigs.findUnique({
             where: {
-                id: gigId
+                id: gigId,
+                users :{
+                    deleted : false
+                }
             }
         });
         if (!gig) {
@@ -158,7 +161,10 @@ export class GigsService {
     async getGigs(page: { index: number, size: number }) {
         const total = await this.prisma.gigs.count({
             where: {
-                deleted: false
+                deleted: false,
+                users :{
+                    deleted : false
+                }
             }
         });
         const index = (page.index - 1) * page.size;
@@ -170,6 +176,9 @@ export class GigsService {
             },
             where: {
                 deleted: false,
+                users :{
+                    deleted : false
+                }
             },
             include: {
                 users: {
@@ -207,7 +216,10 @@ export class GigsService {
         const gig = await this.prisma.gigs.findUnique({
             where: {
                 deleted: false,
-                id: id
+                id: id,
+                users :{
+                    deleted : false
+                }
             },
             include: {
                 users: {
@@ -245,6 +257,9 @@ export class GigsService {
         const total = await this.prisma.gigs.count({
             where: {
                 deleted: false,
+                users :{
+                    deleted : false
+                },
                 name: {
                     contains: keyword,
                 }
@@ -254,6 +269,9 @@ export class GigsService {
         const gigs = await this.prisma.gigs.findMany({
             where: {
                 deleted: false,
+                users :{
+                    deleted : false
+                },
                 name: {
                     contains: keyword,
                 }
@@ -357,7 +375,11 @@ export class GigsService {
         let prevRating = 0;
         const gig = await this.prisma.gigs.findUnique({
             where: {
-                id: gigId
+                id: gigId,
+                deleted : false,
+                users :{
+                    deleted : false
+                }
             }
         });
         if (!gig) {
@@ -410,7 +432,11 @@ export class GigsService {
     async removeRatingGig(userId: number, gigId: number) {
         const gig = await this.prisma.gigs.findUnique({
             where: {
-                id: gigId
+                id: gigId,
+                deleted : false,
+                users :{
+                    deleted : false
+                }
             }
         });
         const gigRating = await this.prisma.gig_rating_users.findUnique({

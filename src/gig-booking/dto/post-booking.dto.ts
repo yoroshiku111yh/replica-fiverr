@@ -15,3 +15,4 @@ export class PostBooking {
     @IsNotEmpty()
     name_booking : string;
 }
+

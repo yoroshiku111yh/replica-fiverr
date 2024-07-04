@@ -70,7 +70,7 @@ export class AuthService {
         const { email, password } = data;
         const user = await this.prisma.users.findFirst({
             where: {
-                email: email
+                email: email,
             },
             include : {
                 roles : true
@@ -78,6 +78,9 @@ export class AuthService {
         });
         if (!user) {
             throw new HttpException("email or password is not right", HttpStatus.UNAUTHORIZED);
+        }
+        if(user.deleted === true){
+            throw new HttpException("user had been banned", HttpStatus.UNAUTHORIZED);
         }
         const { pass_word } = user;
         const isPasswordValid = await bcrypt.compare(password, pass_word);

@@ -2,7 +2,7 @@ import { HttpException, HttpStatus, Inject, Injectable, NotFoundException, forwa
 import { PrismaClient } from '@prisma/client';
 import { ImageCompressed } from 'src/pipes/compress-images/compress-images.pipe';
 import { removeExcludedKeys } from 'ultil/function/excludeField';
-import { UserInfoDto } from './dto/user.dto';
+import { UpdateRoleDto, UserInfoDto } from './dto/user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { TokenPayload } from 'src/auth/dto/token.dto';
 import generateRandomString from 'ultil/function/randomString';
@@ -55,11 +55,11 @@ export class UsersService {
   async editProfile(data: UpdateUserDto, userId: number) {
     const { gender, birthday, fullname, phone, skill } = data;
     const user = await this.prisma.users.findUnique({
-      where : {
-        id : userId,
+      where: {
+        id: userId,
       },
-      include : {
-        roles : true
+      include: {
+        roles: true
       }
     });
     if (!user) {
@@ -81,7 +81,7 @@ export class UsersService {
       id: userId,
       name: fullname,
       keyPair: generateRandomString(+process.env.LENGTH_KEY_PAIR),
-      role : user.roles.name_role
+      role: user.roles.name_role
     }
     const { accessToken, refreshToken } = await this.authService.createPairAccessAndRefreshToken(payload);
     await this.authService.updateRefreshTokenToData(refreshToken, userId);
@@ -319,6 +319,48 @@ export class UsersService {
         totalPage: Math.ceil(total / page.size),
         data: listGig
       }
+    }
+  }
+  async listRole() {
+    const listRole = await this.prisma.roles.findMany({});
+    return {
+      statusCode: HttpStatus.OK,
+      message: "roles",
+      data: listRole
+    }
+  }
+
+  async assignRole(data: UpdateRoleDto) {
+    const { role_id, user_id } = data;
+    const user = await this.prisma.users.findUnique({
+      where: {
+        id: user_id,
+        deleted: false
+      }
+    });
+    if (!user) {
+      throw new NotFoundException("user not found");
+    }
+    const role = await this.prisma.roles.findUnique({
+      where: {
+        id: role_id,
+      }
+    });
+    if (!role) {
+      throw new NotFoundException("role not found");
+    }
+    await this.prisma.users.update({
+      where: {
+        id: user_id,
+        deleted: false
+      },
+      data: {
+        role_id: role_id
+      }
+    });
+    return {
+      statusCode: HttpStatus.OK,
+      message: "update role success"
     }
   }
 }

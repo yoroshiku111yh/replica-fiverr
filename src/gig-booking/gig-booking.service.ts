@@ -72,13 +72,25 @@ export class GigBookingService {
     async getAllBooking(page: { index: number, size: number }) {
         const total = await this.prisma.gig_booking.count({
             where: {
-                deleted: false
+                deleted: false,
+                users_gig_booking_gig_author_idTousers : {
+                    deleted : false
+                },
+                users_gig_booking_renter_idTousers : {
+                    deleted : false
+                }
             }
         })
         const index = (page.index - 1) * page.size;
         const booking = await this.prisma.gig_booking.findMany({
             where: {
-                deleted: false
+                deleted: false,
+                users_gig_booking_gig_author_idTousers : {
+                    deleted : false
+                },
+                users_gig_booking_renter_idTousers : {
+                    deleted : false
+                }
             },
             take: page.size,
             skip: index,
@@ -119,14 +131,20 @@ export class GigBookingService {
         const total = await this.prisma.gig_booking.count({
             where: {
                 deleted: false,
-                gig_author_id: authorId
+                gig_author_id: authorId,
+                users_gig_booking_gig_author_idTousers : {
+                    deleted : false
+                }
             }
         })
         const index = (page.index - 1) * page.size;
         const booking = await this.prisma.gig_booking.findMany({
             where: {
                 deleted: false,
-                gig_author_id: authorId
+                gig_author_id: authorId,
+                users_gig_booking_gig_author_idTousers : {
+                    deleted : false
+                }
             },
             take: page.size,
             skip: index,
@@ -167,14 +185,20 @@ export class GigBookingService {
         const total = await this.prisma.gig_booking.count({
             where: {
                 deleted: false,
-                renter_id: renterId
+                renter_id: renterId,
+                users_gig_booking_renter_idTousers : {
+                    deleted : false
+                }
             }
         })
         const index = (page.index - 1) * page.size;
         const booking = await this.prisma.gig_booking.findMany({
             where: {
                 deleted: false,
-                renter_id: renterId
+                renter_id: renterId,
+                users_gig_booking_renter_idTousers : {
+                    deleted : false
+                }
             },
             take: page.size,
             skip: index,

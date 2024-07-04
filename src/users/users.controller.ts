@@ -2,15 +2,18 @@ import { TokenPayload } from './../auth/dto/token.dto';
 import { Controller, Post, UseGuards, UseInterceptors, UploadedFile, Req, ForbiddenException, HttpException, HttpStatus, Get, Param, ParseIntPipe, Query, Put, Body, Delete } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { JwtGuard } from 'src/guards/jwt/jwt.guard';
-import { ApiBearerAuth, ApiBody, ApiConsumes, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { CompressImagePipe, ImageCompressed } from 'src/pipes/compress-images/compress-images.pipe';
-import { RequestWithUser } from 'ultil/types';
+import { ROLE_LEVEL, RequestWithUser } from 'ultil/types';
 import { OwnerGuard } from 'src/guards/owner/owner.guard';
 import { ResourceInfo } from 'src/decorators/resource-info/resource-info.decorator';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ThrottlerGuard } from '@nestjs/throttler';
+import { RoleGuard } from 'src/guards/role/role.guard';
+import { Roles } from 'src/decorators/role/roles.decorator';
+import { UpdateRoleDto } from './dto/user.dto';
 
 @ApiTags("Users")
 @Controller('users')
@@ -119,6 +122,20 @@ export class UsersController {
     @Query("page", ParseIntPipe) page: number,
     @Query("limit", ParseIntPipe) limit: number) {
     return this.usersService.getGigsByUserId(id, {size : limit, index : page});
+  }
+
+  @ApiBearerAuth("access-token")
+  @UseGuards(JwtGuard, RoleGuard)
+  @Roles(ROLE_LEVEL.ADMIN)
+  @ApiOperation({ summary: "Need permission Admin to gain role for other user" })
+  @Put("/assign-role")
+  updateRole(@Body() data : UpdateRoleDto  ){
+    return this.usersService.assignRole(data);
+  }
+
+  @Get("/roles")
+  listRole(){
+    return this.usersService.listRole();
   }
 }
 

@@ -132,7 +132,7 @@ export class GigsController {
   @ApiBearerAuth("access-token")
   @ApiOperation({ summary: "Need permission Owner or admin to access" })
   @UseGuards(JwtGuard, CompositeGuardMixin())
-  @CompositeGuardDecorator(OwnerGuard,)
+  @CompositeGuardDecorator(OwnerGuard, RoleGuard)
   @Roles(ROLE_LEVEL.ADMIN)
   @ResourceInfo({
     table: "gig_booking",
