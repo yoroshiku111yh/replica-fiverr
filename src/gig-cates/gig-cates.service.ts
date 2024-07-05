@@ -1,4 +1,4 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import { SubGigCateDto } from './dto/sub-cate.dto';
 import { removeExcludedKeys } from 'ultil/function/excludeField';
@@ -61,6 +61,14 @@ export class GigCatesService {
     }
 
     async postSubCategoryImage(cateId: number, image: ImageCompressed) {
+        const subCate = await this.prisma.gig_cate_details.findUnique({
+            where : {
+                id : cateId
+            }
+        });
+        if(!subCate){
+            throw new NotFoundException("sub category not found");
+        }
         await this.prisma.gig_cate_details.update({
             where: {
                 id: cateId

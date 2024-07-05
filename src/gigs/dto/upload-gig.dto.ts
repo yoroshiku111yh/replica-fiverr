@@ -30,4 +30,8 @@ export class UploadGigDto {
     @ApiProperty({ type: "string", example: "[1, 2, 3]" })
     @IsNotEmpty()
     cates: string;
+
+    @ApiProperty({ type: "string", format: "binary" })
+    //@IsNotEmpty()
+    imageGig: string;
 }

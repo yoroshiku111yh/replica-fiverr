@@ -14,5 +14,10 @@ export class PostBooking {
     @ApiProperty({ example: "booking's name", description: "booking name" })
     @IsNotEmpty()
     name_booking : string;
+
+    @ApiProperty({ example: "100", description: "Price in range budget of Gig" })
+    @IsNotEmpty()
+    @IsNumber()
+    price: number;
 }
 

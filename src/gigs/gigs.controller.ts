@@ -30,16 +30,6 @@ export class GigsController {
     description: 'Upload Gig',
     required: true,
     type: UploadGigDto,
-    schema: {
-      type: 'object',
-      properties: {
-        imageGig: {
-          type: 'string',
-          format: 'binary',
-          description: 'Gig image'
-        }
-      }
-    }
   })
   @UseInterceptors(FileInterceptor("imageGig", {
     storage: memoryStorage(),
@@ -54,8 +44,8 @@ export class GigsController {
   }
 
   @ApiBearerAuth("access-token")
-  @ApiOperation({ summary: "Need admin to access" })
-  @UseGuards(JwtGuard, RoleGuard, ThrottlerGuard)
+  @ApiOperation({ summary: "Need admin or Owner to access" })
+  @UseGuards(JwtGuard, RoleGuard, OwnerGuard, ThrottlerGuard)
   @Roles(ROLE_LEVEL.ADMIN)
   @ResourceInfo({
     table: "gigs",
@@ -64,41 +54,6 @@ export class GigsController {
   @Put("/:id(\\d+)")
   editGig(@Body() data: EditGigDto, @Param("id", ParseIntPipe) id: number) {
     return this.gigsService.editGig(data, id);
-  }
-
-  @ApiBearerAuth("access-token")
-  @UseGuards(JwtGuard, OwnerGuard)
-  @ResourceInfo({
-    table: "gigs",
-    field: "author_id"
-  })
-  @ApiConsumes('multipart/form-data')
-  @ApiBody({
-    description: 'Upload Gig',
-    required: true,
-    schema: {
-      type: 'object',
-      properties: {
-        imageGig: {
-          type: 'string',
-          format: 'binary',
-          description: 'Gig image'
-        }
-      }
-    }
-  })
-  @UseInterceptors(FileInterceptor("imageGig", {
-    storage: memoryStorage(),
-    limits: {
-      fileSize: 2 * 10e6 // 2mb in byte
-    }
-  }))
-  @Post("/:id(\\d+)/image")
-  uploadImageToGig(@UploadedFile(CompressImagePipe) imageGig: ImageCompressed[], @Param("id", ParseIntPipe) id: number) {
-    if (!imageGig || imageGig.length === 0) {
-      throw new HttpException("Image must be below 2mb", HttpStatus.FORBIDDEN);
-    }
-    return this.gigsService.uploadImageToGig(id, imageGig[0])
   }
 
   @ApiQuery({ name: 'page', required: true, type: Number, description: 'Page number', example: 1 })

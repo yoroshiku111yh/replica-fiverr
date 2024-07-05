@@ -53,6 +53,7 @@ model gig_booking {
   gig_author_id                          Int
   endAt                                  DateTime?   @db.DateTime(0)
   name_booking                           String      @db.VarChar(255)
+  price                                  Float       @db.Float
   gig_status                             gig_status? @relation(fields: [status_id], references: [id], onDelete: SetDefault, onUpdate: NoAction, map: "gig_booking_ibfk_4")
   users_gig_booking_renter_idTousers     users       @relation("gig_booking_renter_idTousers", fields: [renter_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "gig_booking_ibfk_5")
   gigs                                   gigs?       @relation(fields: [gig_id], references: [id], onUpdate: NoAction, map: "gig_booking_ibfk_6")

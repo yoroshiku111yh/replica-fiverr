@@ -39,6 +39,9 @@ export class GigBookingService {
         if (!statusCreated) {
             throw new HttpException("Missing database", HttpStatus.INTERNAL_SERVER_ERROR);
         }
+        if(data.price > gig.price){
+            throw new HttpException("Price is too high", HttpStatus.BAD_REQUEST);
+        }
         const booking = await this.prisma.gig_booking.create({
             data: {
                 gig_id: data.gig_id,
@@ -46,7 +49,8 @@ export class GigBookingService {
                 status_id: statusCreated.id,
                 gig_author_id: gig.users.id,
                 endAt: new Date(data.endAt),
-                name_booking : data.name_booking
+                name_booking : data.name_booking,
+                price : data.price
             }
         });
         await this.prisma.gig_booking_user.upsert({

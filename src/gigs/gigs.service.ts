@@ -133,31 +133,6 @@ export class GigsService {
         return arExistCates;
     }
 
-    async uploadImageToGig(gigId: number, image: ImageCompressed) {
-        const gig = await this.prisma.gigs.findUnique({
-            where: {
-                id: gigId,
-                deleted: false || null
-            }
-        });
-        if (!gig) {
-            throw new NotFoundException();
-        }
-        await this.prisma.gigs.update({
-            where: {
-                id: gigId
-            },
-            data: {
-                image: image.path
-            }
-        });
-        return {
-            statusCode: HttpStatus.OK,
-            message: "Upload image success",
-            data: image.path
-        }
-    }
-
     async getGigs(page: { index: number, size: number }) {
         const total = await this.prisma.gigs.count({
             where: {
