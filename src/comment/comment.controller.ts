@@ -45,8 +45,8 @@ export class CommentController {
     table: "gig_comments",
     field: "user_id"
   })
-  @Delete("/:id(\\d+)")
-  hiddenComment(@Param("id", ParseIntPipe) id: number) {
-    return this.commentService.hiddenComment(id);
+  @Delete("/:resourceId(\\d+)")
+  hiddenComment(@Param("resourceId", ParseIntPipe) resourceId: number) {
+    return this.commentService.hiddenComment(resourceId);
   }
 }

@@ -1,73 +1,90 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
-</p>
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+# Project Title
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+A brief description of what this project does and who it's for
 
-## Description
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Environment Variables
 
-## Installation
+To run this project, you will need to add the following environment variables to your .env file
 
 ```bash
-$ yarn install
+DATABASE_URL="mysql://root:123456@localhost:3306/replica-fiverr"
+
+SECRECT_KEY="MY-SECRECT-KEY"
+SECRECT_KEY_REFRESH="MY-SECRECT-REFESH-KEY"
+
+EXPIRES_IN="1h"
+REFRESH_EXPIRES_IN="7d"
+
+LENGTH_KEY_PAIR="3"
+
+PATH_PUBLIC_IMAGE_UPLOAD="/img/gigs"
+PATH_PUBLIC_IMAGE_AVATAR="/img/avatar"
+PATH_IMAGE_PUBLIC_CATEGORIES="/img/sub-categories"
 ```
 
-## Running the app
+
+## Dev
+
+To run dev this project run
 
 ```bash
-# development
-$ yarn run start
-
-# watch mode
-$ yarn run start:dev
-
-# production mode
-$ yarn run start:prod
+  yarn start:dev
 ```
 
-## Test
+Prisma connect db 
+```base
+  database name : replica-fiverr
+```
+
+To fix error with sharp npm
 
 ```bash
-# unit tests
-$ yarn run test
-
-# e2e tests
-$ yarn run test:e2e
-
-# test coverage
-$ yarn run test:cov
+  yarn add sharp --ignore-engines
 ```
 
-## Support
+## Explain Guard
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+We have 2 roles :
+- ADMIN
+- USER 
 
-## Stay in touch
+For check Owner post before give access to post, put, delete
+```bash
+@ApiBearerAuth("access-token")
+@UseGuards(JwtGuard, OwnerGuard)
+@ResourceInfo({
+  table: "certification",
+  field: "user_id"
+})
+@ApiOperation({ summary: "Need OWNER to access" })
+@Delete("/certifications/:resourceId(\\d+)")
+```
+- with Param resourceId will be used to get item with id = resourceId and check OWNER.
 
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+For check Role, if role ADMIN 
+```bash
+@ApiBearerAuth("access-token")
+@UseGuards(JwtGuard, RoleGuard)
+@Roles(ROLE_LEVEL.ADMIN)
+@ApiOperation({ summary: "Need permission Admin to gain role for other user" })
+@Put("/assign-role")
+```
+- If user has role in list roles in decorator @Roles, then have access to do.
 
-## License
+For check whether OWNER or ADMIN to access data
+```base
+@ApiBearerAuth("access-token")
+@ApiOperation({ summary: "Need permission Owner or admin to access" })
+@UseGuards(JwtGuard, CompositeGuardMixin())
+@CompositeGuardDecorator(OwnerGuard, RoleGuard)
+@Roles(ROLE_LEVEL.ADMIN)
+@ResourceInfo({
+  table: "gig_booking",
+  field: "renter_id"
+})
+@Delete("/:resourceId(\\d+)")
+```
+- We use custom guard mixin name `CompositeGuardMixin`, with input is OWNER guard & ROLE guard, if one guard success then good to go.
 
-Nest is [MIT licensed](LICENSE).

@@ -45,15 +45,16 @@ export class GigsController {
 
   @ApiBearerAuth("access-token")
   @ApiOperation({ summary: "Need admin or Owner to access" })
-  @UseGuards(JwtGuard, RoleGuard, OwnerGuard, ThrottlerGuard)
+  @UseGuards(JwtGuard, CompositeGuardMixin(), ThrottlerGuard)
   @Roles(ROLE_LEVEL.ADMIN)
+  @CompositeGuardDecorator(OwnerGuard, RoleGuard)
   @ResourceInfo({
     table: "gigs",
     field: "author_id"
   })
-  @Put("/:id(\\d+)")
-  editGig(@Body() data: EditGigDto, @Param("id", ParseIntPipe) id: number) {
-    return this.gigsService.editGig(data, id);
+  @Put("/:resourceId(\\d+)")
+  editGig(@Body() data: EditGigDto, @Param("resourceId", ParseIntPipe) resourceId: number) {
+    return this.gigsService.editGig(data, resourceId);
   }
 
   @ApiQuery({ name: 'page', required: true, type: Number, description: 'Page number', example: 1 })
@@ -90,12 +91,12 @@ export class GigsController {
   @CompositeGuardDecorator(OwnerGuard, RoleGuard)
   @Roles(ROLE_LEVEL.ADMIN)
   @ResourceInfo({
-    table: "gig_booking",
-    field: "renter_id"
+    table: "gigs",
+    field: "author_id"
   })
-  @Delete("/:id(\\d+)")
-  deleteGig(@Param("id", ParseIntPipe) id: number) {
-    return this.gigsService.removeGig(id);
+  @Delete("/:resourceId(\\d+)")
+  deleteGig(@Param("resourceId", ParseIntPipe) resourceId: number) {
+    return this.gigsService.removeGig(resourceId);
   }
 
 
